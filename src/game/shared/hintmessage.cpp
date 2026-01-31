@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -255,6 +255,7 @@ void CHintMessageTimers::RemoveTimer( int iHintID )
 	if ( iIndex != m_Timers.InvalidIndex() )
 	{
 		//Warning("TIMER REMOVED: %s\n", m_pszHintMessages[iHintID] );
+		delete m_Timers[iIndex];
 		m_Timers.Remove( iIndex );
 	}
 }

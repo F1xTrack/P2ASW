@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -27,6 +27,8 @@
 #define FORCEINLINE_CVAR FORCEINLINE
 #elif POSIX
 #define FORCEINLINE_CVAR inline
+#elif defined(_PS3)
+#define FORCEINLINE_CVAR __attribute__((always_inline)) FORCEINLINE 
 #else
 #error "implement me"
 #endif
@@ -67,8 +69,10 @@ public:
 //-----------------------------------------------------------------------------
 // Helper method for console development
 //-----------------------------------------------------------------------------
-#if defined( _X360 )
+#if defined( USE_VXCONSOLE )
 void ConVar_PublishToVXConsole();
+#else
+inline void ConVar_PublishToVXConsole() {}
 #endif
 
 
@@ -151,6 +155,9 @@ public:
 
 protected:
 	virtual void				Create( const char *pName, const char *pHelpString = 0, 
+									int flags = 0 );
+
+	void						CreateBase( const char *pName, const char *pHelpString = 0, 
 									int flags = 0 );
 
 	// Used internally by OneTimeInit to initialize/shutdown
@@ -404,6 +411,7 @@ public:
 	float						GetMaxValue() const;
 
 	const char					*GetDefault( void ) const;
+	void						SetDefault( const char *pszDefault );
 
 	// Value
 	struct CVValue_t
@@ -439,12 +447,11 @@ private:
 
 	virtual void				Create( const char *pName, const char *pDefaultValue, int flags = 0,
 									const char *pHelpString = 0, bool bMin = false, float fMin = 0.0,
-									bool bMax = false, float fMax = false, FnChangeCallback_t callback = 0 );
+									bool bMax = false, float fMax = 0.0, bool bCompMin = false, float fCompMin = 0.0,
+									bool bCompMax = false, float fCompMax = 0.0, FnChangeCallback_t callback = 0 );
 
 	// Used internally by OneTimeInit to initialize.
 	virtual void				Init();
-
-
 
 protected:
 
@@ -463,6 +470,13 @@ protected:
 	float						m_fMinVal;
 	bool						m_bHasMax;
 	float						m_fMaxVal;
+
+	bool						m_bHasCompMin;
+	float						m_fCompMinVal;
+	bool						m_bHasCompMax;
+	float						m_fCompMaxVal;
+
+	bool						m_bCompetitiveRestrictions;
 	
 	// Call this function when ConVar changes
 	CUtlVector< FnChangeCallback_t > m_fnChangeCallbacks;
@@ -932,54 +946,15 @@ private:
    static ConCommand name##_command( #name, name, description ); \
    static void name( const CCommand &args )
 
-#ifdef CLIENT_DLL
-	#define CON_COMMAND_SHARED( name, description ) \
-		static void name( const CCommand &args ); \
-		static ConCommand name##_command_client( #name "_client", name, description ); \
-		static void name( const CCommand &args )
-#else
-	#define CON_COMMAND_SHARED( name, description ) \
-		static void name( const CCommand &args ); \
-		static ConCommand name##_command( #name, name, description ); \
-		static void name( const CCommand &args )
-#endif
-
-
 #define CON_COMMAND_F( name, description, flags ) \
-	static void name( const CCommand &args ); \
-	static ConCommand name##_command( #name, name, description, flags ); \
-	static void name( const CCommand &args )
-
-#ifdef CLIENT_DLL
-	#define CON_COMMAND_F_SHARED( name, description, flags ) \
-		static void name( const CCommand &args ); \
-		static ConCommand name##_command_client( #name "_client", name, description, flags ); \
-		static void name( const CCommand &args )
-#else
-	#define CON_COMMAND_F_SHARED( name, description, flags ) \
-		static void name( const CCommand &args ); \
-		static ConCommand name##_command( #name, name, description, flags ); \
-		static void name( const CCommand &args )
-#endif
-
+   static void name( const CCommand &args ); \
+   static ConCommand name##_command( #name, name, description, flags ); \
+   static void name( const CCommand &args )
 
 #define CON_COMMAND_F_COMPLETION( name, description, flags, completion ) \
 	static void name( const CCommand &args ); \
 	static ConCommand name##_command( #name, name, description, flags, completion ); \
 	static void name( const CCommand &args )
-
-#ifdef CLIENT_DLL
-	#define CON_COMMAND_F_COMPLETION_SHARED( name, description, flags, completion ) \
-		static void name( const CCommand &args ); \
-		static ConCommand name##_command_client( #name "_client", name, description, flags, completion ); \
-		static void name( const CCommand &args )
-#else
-	#define CON_COMMAND_F_COMPLETION_SHARED( name, description, flags, completion ) \
-		static void name( const CCommand &args ); \
-		static ConCommand name##_command( #name, name, description, flags, completion ); \
-		static void name( const CCommand &args )
-#endif
-
 
 #define CON_COMMAND_EXTERN( name, _funcname, description ) \
 	void _funcname( const CCommand &args ); \
@@ -1009,3 +984,4 @@ private:
 
 
 #endif // CONVAR_H
+

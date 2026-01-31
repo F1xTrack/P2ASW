@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -61,6 +61,18 @@ void CHintSystem::Init( CBasePlayer *pPlayer, int iMaxHintTypes, const char **ps
 	m_HintHistory.ClearAll();
 
 	m_pszHintMessages = pszHintStrings;
+
+	if ( m_pHintMessageTimers )
+	{
+		delete m_pHintMessageTimers;
+		m_pHintMessageTimers = NULL;
+	}
+
+	if ( m_pHintMessageQueue )
+	{
+		delete m_pHintMessageQueue;
+		m_pHintMessageQueue = NULL;
+	}
 
 	if ( m_pPlayer )
 	{

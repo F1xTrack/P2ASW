@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,6 +20,17 @@
 #include "mathlib/vector.h"
 #include "basetypes.h"
 #include "tier0/dbg.h"
+
+namespace bitbuf
+{
+	inline uint32 ZigZagEncode32( int32 n ) { return( n << 1 ) ^ ( n >> 31 ); }
+	inline int32 ZigZagDecode32( uint32 n ) { return( n >> 1 ) ^ -( int32 )( n & 1 ); }
+	inline uint64 ZigZagEncode64( int64 n ) { return( n << 1 ) ^ ( n >> 63 ); }
+	inline int64 ZigZagDecode64( uint64 n ) { return( n >> 1 ) ^ -( int64 )( n & 1 ); }
+
+	const int kMaxVarint32Bytes = 5;
+	const int kMaxVarintBytes = 10;
+}
 
 
 
@@ -149,13 +160,23 @@ public:
 	
 	void			WriteBitAngle( float fAngle, int numbits );
 	void			WriteBitCoord (const float f);
-	void			WriteBitCoordMP( const float f, EBitCoordType coordType );
+	void			WriteBitCoordMP( const float f, bool bIntegral, bool bLowPrecision );
 	void 			WriteBitCellCoord( const float f, int bits, EBitCoordType coordType );
 	void			WriteBitFloat(float val);
 	void			WriteBitVec3Coord( const Vector& fa );
 	void			WriteBitNormal( float f );
 	void			WriteBitVec3Normal( const Vector& fa );
 	void			WriteBitAngles( const QAngle& fa );
+
+	void			WriteVarInt32( uint32 data );
+	void			WriteVarInt64( uint64 data );
+	void			WriteSignedVarInt32( int32 data );
+	void			WriteSignedVarInt64( int64 data );
+
+	static int		ByteSizeVarInt32( uint32 data );
+	static int		ByteSizeVarInt64( uint64 data );
+	static int		ByteSizeSignedVarInt32( int32 data );
+	static int		ByteSizeSignedVarInt64( int64 data );
 
 
 // Byte functions.
@@ -315,7 +336,7 @@ inline void bf_write::WriteUBitLong( unsigned int curData, int numbits, bool bCh
 	Assert( numbits >= 0 && numbits <= 32 );
 #endif
 
-	extern unsigned long g_BitWriteMasks[32][33];
+	extern unsigned int g_BitWriteMasks[32][33];
 
 	// Bounds checking..
 	if ((m_iCurBit+numbits) > m_nDataBits)
@@ -639,7 +660,7 @@ inline float old_bf_read::ReadBitFloat()
 
 inline unsigned int old_bf_read::ReadUBitLong( int numbits )
 {
-	extern unsigned long g_ExtraMasks[32];
+	extern unsigned int g_ExtraMasks[33];
 
 	if ( (m_iCurBit+numbits) > m_nDataBits )
 	{
@@ -1496,6 +1517,9 @@ public:
 WRAP_READ( CBitRead );
 
 #endif
+
+
+
 
 
 

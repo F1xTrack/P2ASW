@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Pool of all per-level strings. Allocates memory for strings, 
 //			consolodating duplicates. The memory is freed on behalf of clients
@@ -34,13 +34,13 @@ class CGameString
 {
 public:
 	CGameString() : 
-		m_iszString( NULL_STRING ), m_pszString( NULL ), m_iSerial( 0 ) 
+		m_iszString( NULL_STRING ), m_pszString( NULL ), m_iSerial( 0 ), m_bCopy( false )
 	{
 
 	} 
 
 	CGameString( const char *pszString, bool bCopy = false )  : 
-		m_iszString( NULL_STRING ), m_pszString( NULL ), m_iSerial( 0 ) 
+		m_iszString( NULL_STRING ), m_pszString( NULL ), m_iSerial( 0 ), m_bCopy( false )
 	{ 
 		Set( pszString, bCopy ); 
 	}
@@ -57,6 +57,7 @@ public:
 			free( (void *)m_pszString );
 		m_iszString = NULL_STRING;
 		m_pszString = ( !bCopy ) ? pszString : strdup( pszString );
+		m_bCopy = bCopy;
 	}
 
 	string_t Get() const
